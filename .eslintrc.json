@@ -22,7 +22,8 @@
   "globals": {
     "THREE": true,
     "$": true,
-    "TweenMax": true
+    "TweenMax": true,
+    "TimelineMax": true
   },
   "rules": {
     "no-console": 1,

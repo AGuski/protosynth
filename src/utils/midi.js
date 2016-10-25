@@ -2,6 +2,9 @@ export class Midi {
   constructor() {
     this.midi;
     this.messageCallback = () => {};
+    this.noteOnCallbacks = [];
+    this.noteOffCallback = () => {};
+    this.lastNote;
 
     if (navigator.requestMIDIAccess) {
 			navigator.requestMIDIAccess().then((midiAccess) => {
@@ -20,10 +23,6 @@ export class Midi {
     } else {
       alert("No MIDI support present in your browser.  You're gonna have a bad time.") 
     }
-  }
-
-  onMessageListener(callback) {
-    this.messageCallback = callback;
   }
 
   _onMIDIMessage(event) {
@@ -49,10 +48,31 @@ export class Midi {
     this.messageCallback(data);
   }
 
-  _noteOn(note, velocity) {}
+  onMessageListener(callback) {
+    this.messageCallback = callback;
+  }
 
-  _noteOff(note, velocity) {}
+  _noteOn(note, velocity) {
+    let data = {note, velocity};
+    console.log(data);
 
+    for (let callback of this.noteOnCallbacks) {
+      callback(data);
+    }
+  }
+
+  _noteOff(note, velocity) {
+    let data = {note, velocity};
+    this.noteOffCallback(data);
+  }
+
+  onNoteOnListener(callback) {
+    this.noteOnCallbacks.push(callback);
+  }
+
+  onNoteOffListener(callback) {
+    this.noteOffCallback = callback;
+  }
 
   _listInputsAndOutputs(midiAccess) {
     for (let entry of midiAccess.inputs) {
