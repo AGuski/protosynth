@@ -1,9 +1,6 @@
 export class Midi {
   constructor() {
     this.midi;
-    this.messageCallback = () => {};
-    this.noteOnCallbacks = [];
-    this.noteOffCallback = () => {};
     this.lastNote;
 
     if (navigator.requestMIDIAccess) {
@@ -23,11 +20,14 @@ export class Midi {
     } else {
       alert("No MIDI support present in your browser.  You're gonna have a bad time.") 
     }
+
+    /* Play with Keyboard for testing */
+    this._useKeyboard();
+
   }
 
   _onMIDIMessage(event) {
     console.log(event.data);
-
     let data = {
       cmd: event.data[0] >> 4,
       channel: event.data[0] & 0xf,
@@ -45,33 +45,22 @@ export class Midi {
             break;
     }
     
-    this.messageCallback(data);
-  }
-
-  onMessageListener(callback) {
-    this.messageCallback = callback;
+    window.dispatchEvent(new CustomEvent('midi:message', {
+      'detail': data
+    }));
   }
 
   _noteOn(note, velocity) {
-    let data = {note, velocity};
-    console.log(data);
-
-    for (let callback of this.noteOnCallbacks) {
-      callback(data);
-    }
+    // console.log({note, velocity});
+    window.dispatchEvent(new CustomEvent('midi:noteOn', {
+      'detail': { note, velocity }
+    }));
   }
 
   _noteOff(note, velocity) {
-    let data = {note, velocity};
-    this.noteOffCallback(data);
-  }
-
-  onNoteOnListener(callback) {
-    this.noteOnCallbacks.push(callback);
-  }
-
-  onNoteOffListener(callback) {
-    this.noteOffCallback = callback;
+    window.dispatchEvent(new CustomEvent('midi:noteOff', {
+      'detail': { note, velocity }
+    }));
   }
 
   _listInputsAndOutputs(midiAccess) {
@@ -88,5 +77,23 @@ export class Midi {
         "' manufacturer:'" + output.manufacturer + "' name:'" + output.name +
         "' version:'" + output.version + "'" );
     }
+  }
+
+  _useKeyboard() {
+    function onKeyDown(event) {
+      this._noteOn(event.keyCode-50, 100);
+      document.removeEventListener('keypress', onKeyDownBound);
+      document.addEventListener('keyup', onKeyUpBound);
+    }
+    let onKeyDownBound = onKeyDown.bind(this);
+
+    function onKeyUp(event) {
+      this._noteOff(event.keyCode-18, 100);
+      document.addEventListener('keypress', onKeyDownBound);
+      document.removeEventListener('keyup', onKeyUpBound);
+    }
+    let onKeyUpBound = onKeyUp.bind(this);
+
+    document.addEventListener('keypress', onKeyDownBound);
   }
 }

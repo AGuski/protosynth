@@ -5,8 +5,7 @@ import { Midi } from '../utils/midi';
 import { ProtoSynth } from '../protosynth/protosynth';
 
 /**
- *  TODO: Find DRY Solution for multiple listeners on own classes.
- * 
+ *  TODO: 
  * 
  */
 
@@ -26,7 +25,7 @@ class App extends React.Component {
     this.synth = new ProtoSynth(this.midi);
 
     /* MIDIMessageListener */
-    this.midi.onMessageListener((data) => {
+    window.addEventListener('midi:messagen', ({ detail: data }) => {
       this.setState({
         cmd: data.cmd,
         channel: data.channel,
@@ -35,7 +34,7 @@ class App extends React.Component {
     });
 
     /* NoteOnListener */
-    this.midi.onNoteOnListener((data) => {
+    window.addEventListener('midi:noteOn', ({ detail: data }) => {
       this.setState({
         note: data.note,
         velocity: data.velocity

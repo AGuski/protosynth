@@ -19,17 +19,16 @@ export class ProtoSynth {
     oscillator.start(0);
 
     /* NoteOnListener */
-    this.midi.onNoteOnListener((data) => {
+    window.addEventListener('midi:noteOn', ({ detail: data }) => {
       oscillator.frequency.cancelScheduledValues(0);
       oscillator.frequency.setTargetAtTime( this.noteToFreq(data.note), 0, 0.05);
       this.midi.lastNote = data.note;
-
       envelope.gain.cancelScheduledValues(0);
       envelope.gain.setTargetAtTime(this.velocityToVolume(data.velocity), 0, 0.05);
     });
 
     /* NoteOffListener */
-    this.midi.onNoteOffListener((data) => {
+    window.addEventListener('midi:noteOff', ({ detail: data }) => {
       if(data.note === this.midi.lastNote) {
         envelope.gain.cancelScheduledValues(0);
         envelope.gain.setTargetAtTime(0.0, 0, 0.05 );
