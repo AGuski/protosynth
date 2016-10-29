@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom';
 import { Midi } from '../utils/midi';
 import { ProtoSynth } from '../protosynth/protosynth';
 
+import { Indicator } from './indicator/Indicator.component';
+
 /**
  *  TODO: 
  * 
@@ -39,7 +41,6 @@ class App extends React.Component {
         note: data.note,
         velocity: data.velocity
       });
-      this.runSimpleIndicator('.vel-indicator', data.velocity);
     });
   }
 
@@ -52,25 +53,12 @@ class App extends React.Component {
         <span>Note: {this.state.note}</span><br/>
         <span>Velocity: {this.state.velocity}</span>
         <div className="indicators">
-          <div className="indicator vel-indicator" ></div>
-          <div className="indicator" ></div>
+          <Indicator max="128" value={this.state.velocity} />
+          <Indicator max="128" value={this.state.velocity} />
         </div>
       </div>
     );
   }
-
-  /* Auszulagern */
-
-  runSimpleIndicator(selector, value) {
-    let timeline = new TimelineMax();
-    timeline.to(selector, 0.1, {
-      opacity: (1 / 128)*value
-    }).to(selector, 1, {
-      opacity: 0,
-      ease: Expo.easeNone
-    });
-  }
-
 }
 
 export default App;
