@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 import { Midi } from '../utils/midi';
 import { ProtoSynth } from '../protosynth/protosynth';
 
+import { SynthUI } from './synth-ui/SynthUI.component';
 import { Indicator } from './indicator/Indicator.component';
 
 /**
@@ -27,7 +28,7 @@ class App extends React.Component {
     this.synth = new ProtoSynth(this.midi);
 
     /* MIDIMessageListener */
-    window.addEventListener('midi:messagen', ({ detail: data }) => {
+    window.addEventListener('midi:message', ({ detail: data }) => {
       this.setState({
         cmd: data.cmd,
         channel: data.channel,
@@ -42,6 +43,13 @@ class App extends React.Component {
         velocity: data.velocity
       });
     });
+
+    /* AftertouchListener */
+    window.addEventListener('midi:aftertouch', ({ detail: data }) => {
+      this.setState({
+        velocity: data.velocity
+      });
+    });
   }
 
   render() {
@@ -53,9 +61,10 @@ class App extends React.Component {
         <span>Note: {this.state.note}</span><br/>
         <span>Velocity: {this.state.velocity}</span>
         <div className="indicators">
-          <Indicator max="128" value={this.state.velocity} />
-          <Indicator max="128" value={this.state.velocity} />
+          <Indicator max="127" value={this.state.velocity} />
+          <Indicator max="127" value={this.state.velocity} />
         </div>
+        <SynthUI synth={this.synth} />
       </div>
     );
   }
