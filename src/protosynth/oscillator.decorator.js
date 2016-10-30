@@ -9,14 +9,15 @@ export default function createOscillator(audioCtx, options = {}) {
   oscillator.detune.value = options.detune || 0;
   oscillator.glide = options.glide || false;
 
-
   /* Change Frequency */
   oscillator.changeFrequency = (frequency) => {
     oscillator.frequency.cancelScheduledValues(0);
-    // oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
     oscillator.frequency.setTargetAtTime(frequency, 0, oscillator.glide || 0.0000001);
-  } 
+  }
+
+  oscillator.detuneBy = (value) => {
+    oscillator.detune.value = value;
+  }
 
   return oscillator;
 }
-
