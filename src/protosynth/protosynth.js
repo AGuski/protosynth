@@ -3,6 +3,9 @@
  * 
  */
 
+import createOscillator from './oscillator.decorator';
+import createEnvelope from './envelope.decorator';
+
 export class ProtoSynth {
   constructor(midi) {
     this.midi = midi;
@@ -12,23 +15,32 @@ export class ProtoSynth {
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioCtx = new AudioContext();
 
-    this.oscillator = this.audioCtx.createOscillator();
-    this.oscillator.type = 'sine';
-    this.oscillator.frequency.value = 440;
-    this.envelope = this.audioCtx.createGain();
+    this.oscillator = createOscillator(this.audioCtx, {
+      type: 'sawtooth',
+      glide: false
+    });
+
+    this.envelope = createEnvelope(this.audioCtx, {
+      attack: 0.1,
+      decay: 0.1,
+      sustain: 0.1,
+      release: 0.2,
+      retrigger: true,
+    });
+
+    /* Connections */
     this.oscillator.connect(this.envelope);
     this.envelope.connect(this.audioCtx.destination);
-    this.envelope.gain.value = 0.0;
+
+    /* Start */
     this.oscillator.start(0);
 
     /* NoteOnListener */
     window.addEventListener('midi:noteOn', ({ detail: data }) => {
       this.activeNotes.push(data);
       this.lastNote = this._getLastNote();
-      this.oscillator.frequency.cancelScheduledValues(0);
-      this.oscillator.frequency.setTargetAtTime( this.getLastNoteFreq(), 0, 0.05);
-      this.envelope.gain.cancelScheduledValues(0);
-      this.envelope.gain.setTargetAtTime(this.velocityToVolume(this.lastNote.velocity), 0, 0.05);
+      this.oscillator.changeFrequency(this.getLastNoteFreq());
+      this.envelope.startEnvelope(this.velocityToVolume(this.lastNote.velocity));
     });
 
     /* NoteOffListener */
@@ -36,32 +48,27 @@ export class ProtoSynth {
       let noteOffIndex = this.activeNotes.findIndex(({ note }) => {
         return note === data.note;
       });
-      
+
       if (noteOffIndex !== -1) {
         this.activeNotes.splice(noteOffIndex, 1);
         this.lastNote = this._getLastNote();
       }
 
       if(this.activeNotes.length <= 0) {
-        this.envelope.gain.cancelScheduledValues(0);
-        this.envelope.gain.setTargetAtTime(0.0, 0, 0.05 );
+        this.envelope.endEnvelope();
       } else {
-        this.oscillator.frequency.cancelScheduledValues(0);
-        this.oscillator.frequency.setTargetAtTime( this.getLastNoteFreq(), 0, 0.05);
-        this.envelope.gain.cancelScheduledValues(0);
-        this.envelope.gain.setTargetAtTime(this.velocityToVolume(this.lastNote.velocity), 0, 0.05);
+        this.oscillator.changeFrequency(this.getLastNoteFreq());
       }
     });
 
     /* AftertouchListener */
     // window.addEventListener('midi:aftertouch', ({ detail: data }) => {
-    //   envelope.gain.setTargetAtTime(this.velocityToVolume(data.velocity), 0, 0.05);
+
     // });
 
     /* ControlChangeListener */
     window.addEventListener('midi:controlChange', ({ detail: data }) => {
-      this.oscillator.frequency.cancelScheduledValues(0);
-      this.oscillator.frequency.setTargetAtTime(this.getLastNoteFreq()*(this.velocityToVolume(data.value)*2), 0, 0.05);
+      this.oscillator.changeFrequency(this.getLastNoteFreq()*(this.velocityToVolume(data.value)*2));
     });
   }
 

@@ -32,7 +32,7 @@ export class SynthUI extends React.Component {
     return (
       <div>
         <h1>protoSYNTH</h1>
-        <select name="type" id="type"
+        <select name="type" id="type" value={this.props.synth.oscillator.type}
           onChange= {this.handleChange} >
           <option value="sine">sine</option>
           <option value="square">square</option>

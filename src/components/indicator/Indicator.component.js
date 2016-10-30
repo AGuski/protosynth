@@ -11,13 +11,15 @@ export class Indicator extends React.Component {
   }
 
   componentWillReceiveProps(props) {
-    let timeline = new TimelineMax();
-    timeline.to(this.element, 0.1, {
-      opacity: (1 / this.props.max)*props.value
-    }).to(this.element, 1, {
-      opacity: 0,
-      ease: Expo.easeNone
-    });
+    if (this.props.value != props.value) {
+      let timeline = new TimelineMax();
+      timeline.to(this.element, 0.1, {
+        opacity: (1 / this.props.max)*props.value
+      }).to(this.element, 1, {
+        opacity: 0,
+        ease: Expo.easeNone
+      });
+    }
   }
 
   render() {
