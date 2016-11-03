@@ -107,20 +107,59 @@ export class Midi {
   }
 
   _useKeyboard() {
-    function onKeyDown(event) {
-      this._noteOn(event.keyCode-50, 100);
-      document.removeEventListener('keypress', onKeyDownBound);
-      document.addEventListener('keyup', onKeyUpBound);
+    let onKeyDown = (event) => {
+      if (KEY_NOTE_DICT[event.keyCode]) {
+        this._noteOn(KEY_NOTE_DICT[event.keyCode], 100);
+        document.removeEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
+      }
     }
-    let onKeyDownBound = onKeyDown.bind(this);
+    onKeyDown = onKeyDown.bind(this);
 
-    function onKeyUp(event) {
-      this._noteOff(event.keyCode-18, 100);
-      document.addEventListener('keypress', onKeyDownBound);
-      document.removeEventListener('keyup', onKeyUpBound);
+    let onKeyUp = (event) => {
+      this._noteOff(KEY_NOTE_DICT[event.keyCode], 100);
+      document.addEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
     }
-    let onKeyUpBound = onKeyUp.bind(this);
+    onKeyUp = onKeyUp.bind(this);
 
-    document.addEventListener('keypress', onKeyDownBound);
+    document.addEventListener('keydown', onKeyDown);
   }
+}
+
+const KEY_NOTE_DICT = {
+  89: 36,
+  83: 37,
+  88: 38,
+  68: 39,
+  67: 40,
+  86: 41,
+  71: 42,
+  66: 43,
+  72: 44,
+  78: 45,
+  74: 46,
+  77: 47,
+  188: 48, 
+  76: 49,
+  190: 50,
+  186: 51,
+  189: 52,
+  81: 53,
+  50: 54,
+  87: 55,
+  51: 56,
+  69: 57,
+  52: 58,
+  82: 59,
+  84: 60,
+  54: 61,
+  90: 62,
+  55: 63,
+  85: 64,
+  73: 65,
+  57: 66,
+  79: 67,
+  48: 68,
+  80: 69
 }

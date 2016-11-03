@@ -30,10 +30,10 @@ export default function createEnvelope(audioCtx, options = {}) {
   /* on Release */
   env.endEnvelope = () => {
     env.gain.cancelScheduledValues(0);
-    env.gain.setTargetAtTime(0.0, 0, env.release);
+    env.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+env.release);
   }
 
-  /* setter */
+  /* setter - not used right now :( */
   env.setAttack = (value) => {
     env.attack = value + 0.00000001;
   }

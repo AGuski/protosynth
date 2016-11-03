@@ -3,8 +3,7 @@
  * 
  */
 
-import createOscillator from './oscillator.decorator';
-import createEnvelope from './envelope.decorator';
+import PolyOscillator from './polyOscillator';
 
 export class ProtoSynth {
   constructor(midi) {
@@ -15,50 +14,43 @@ export class ProtoSynth {
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     this.audioCtx = new AudioContext();
 
-    this.oscillator = createOscillator(this.audioCtx, {
-      type: 'sawtooth',
-      glide: false
+    this.oscillator = new PolyOscillator(this.audioCtx, {
+      osc: {
+        type: 'square',
+        glide: false
+      },
+      env: {
+        attack: 0.2,
+        decay: 0.1,
+        sustain: 0.1,
+        release: 0.6,
+        retrigger: true,
+      }
     });
-
-    this.envelope = createEnvelope(this.audioCtx, {
-      attack: 0.1,
-      decay: 0.1,
-      sustain: 0.1,
-      release: 0.2,
-      retrigger: true,
-    });
-
-    /* Connections */
-    this.oscillator.connect(this.envelope);
-    this.envelope.connect(this.audioCtx.destination);
-
-    /* Start */
-    this.oscillator.start(0);
+    this.oscillator.setPolyphony(false);
 
     /* NoteOnListener */
     window.addEventListener('midi:noteOn', ({ detail: data }) => {
+      // Keep track of MIDI notes
       this.activeNotes.push(data);
       this.lastNote = this._getLastNote();
-      this.oscillator.changeFrequency(this.getLastNoteFreq());
-      this.envelope.startEnvelope(this.velocityToVolume(this.lastNote.velocity));
+      // play oscillator
+      this.oscillator.startTone(this.noteToFreq(data.note), data.velocity);
     });
 
     /* NoteOffListener */
     window.addEventListener('midi:noteOff', ({ detail: data }) => {
+      // Get the index of the noteOff note
       let noteOffIndex = this.activeNotes.findIndex(({ note }) => {
         return note === data.note;
       });
-
+      // remove it from the stack
       if (noteOffIndex !== -1) {
         this.activeNotes.splice(noteOffIndex, 1);
         this.lastNote = this._getLastNote();
       }
-
-      if(this.activeNotes.length <= 0) {
-        this.envelope.endEnvelope();
-      } else {
-        this.oscillator.changeFrequency(this.getLastNoteFreq());
-      }
+      //release oscillator
+      this.oscillator.releaseTone(noteOffIndex, this.activeNotes, this.getLastNoteFreq());
     });
 
     /* AftertouchListener */
@@ -67,11 +59,12 @@ export class ProtoSynth {
     // });
 
     /* ControlChangeListener */
-    window.addEventListener('midi:controlChange', ({ detail: data }) => {
-      this.oscillator.changeFrequency(this.getLastNoteFreq()*(this.velocityToVolume(data.value)*2));
-    });
+    // window.addEventListener('midi:controlChange', ({ detail: data }) => {
+    //   // this.oscillator.changeFrequency(this.getLastNoteFreq()*(this.velocityToVolume(data.value)*2));
+    // });
   }
 
+  /* Get the latest noteOn note */
   _getLastNote() {
     return this.activeNotes.length > 0 ?
       this.activeNotes[this.activeNotes.length-1] : this.lastNote;
@@ -83,9 +76,5 @@ export class ProtoSynth {
 
   noteToFreq(note) {
     return 440 * Math.pow(2,(note-69)/12);
-  }
-
-  velocityToVolume(velocity) {
-    return (1 / 128)*velocity;
   }
 }
