@@ -8,7 +8,7 @@ export class Midi {
         let inputs = this.midi.inputs.values();
         if (this.midi.inputs.size === 0) {
           /* Play with Keyboard for testing */
-          console.log("No MIDI Device detected, switching to keyboard control...");
+          alert("No MIDI Device detected, switching to keyboard control...");
           this._useKeyboard();
         } else {
           this._listInputsAndOutputs(midiAccess);
@@ -107,23 +107,23 @@ export class Midi {
   }
 
   _useKeyboard() {
-    let onKeyDown = (event) => {
-      if (KEY_NOTE_DICT[event.keyCode]) {
+
+    let pressedKeys = []
+
+    document.addEventListener('keydown', (event) => {
+      if (KEY_NOTE_DICT[event.keyCode] && pressedKeys.indexOf(event.keyCode) === -1) {
         this._noteOn(KEY_NOTE_DICT[event.keyCode], 100);
-        document.removeEventListener('keydown', onKeyDown);
-        document.addEventListener('keyup', onKeyUp);
+        pressedKeys.push(event.keyCode);
       }
-    }
-    onKeyDown = onKeyDown.bind(this);
+    });
 
-    let onKeyUp = (event) => {
-      this._noteOff(KEY_NOTE_DICT[event.keyCode], 100);
-      document.addEventListener('keydown', onKeyDown);
-      document.removeEventListener('keyup', onKeyUp);
-    }
-    onKeyUp = onKeyUp.bind(this);
-
-    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', (event) => {
+      let index = pressedKeys.indexOf(event.keyCode);
+      if (index !== -1) {
+        this._noteOff(KEY_NOTE_DICT[event.keyCode], 0);
+        pressedKeys.splice(index, 1);
+      }
+    });
   }
 }
 
