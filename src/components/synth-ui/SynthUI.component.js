@@ -11,7 +11,8 @@ export class SynthUI extends React.Component {
       attack: this.props.synth.oscillator.getParam('env.attack'),
       decay: this.props.synth.oscillator.getParam('env.decay'),
       sustain: this.props.synth.oscillator.getParam('env.sustain'),
-      release: this.props.synth.oscillator.getParam('env.release')
+      release: this.props.synth.oscillator.getParam('env.release'),
+      filter: this.props.synth.filter.frequency.value
     }
   }
 
@@ -46,6 +47,10 @@ export class SynthUI extends React.Component {
       case "releaseCtrl":
         synth.oscillator.setParam('env.release', parseFloat(value));
         this.setState({release: value});
+        break;
+      case "filterCtrl":
+        synth.filter.frequency.value = parseFloat(value);
+        this.setState({filter: value});
         break;
     }
   }
@@ -107,6 +112,14 @@ export class SynthUI extends React.Component {
             />{this.props.synth.oscillator.getParam('env.release').toFixed(3)}
           </label>
         </div>
+
+        <label className="synth-input" htmlFor="filterCtrl">Lowpass Filter:
+          <input type="range" name="filterCtrl"
+            min="0" max="14000" step="1"
+            value={this.state.filter}
+            onChange={this.handleChange}
+          /> {this.props.synth.filter.frequency.value} Hz
+        </label>
 
       </div>
     );

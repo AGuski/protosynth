@@ -29,6 +29,16 @@ export class ProtoSynth {
     });
     this.oscillator.setPolyphony(false);
 
+    this.filter = this.audioCtx.createBiquadFilter();
+    this.filter.frequency.value = 22000; 
+    this.filter.type = 'lowpass';
+    this.filter.Q.value = 5;
+
+    this.oscillator.connect(this.filter);
+    this.filter.connect(this.audioCtx.destination);
+
+    
+
     /* NoteOnListener */
     window.addEventListener('midi:noteOn', ({ detail: data }) => {
       // Keep track of MIDI notes

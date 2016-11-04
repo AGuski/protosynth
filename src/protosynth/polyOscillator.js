@@ -10,6 +10,7 @@ const MAX_VELOCITY = 127
 
 export default class PolyOscillator {
   constructor(audioContext, options) {
+    this.destination;
     this.audioCtx = audioContext;
     this.params = {
       osc: options.osc,
@@ -61,7 +62,9 @@ export default class PolyOscillator {
 
     // Connections
     voice.osc.connect(voice.env);
-    voice.env.connect(this.audioCtx.destination);
+    if (this.destination) {
+      voice.env.connect(this.destination);
+    }
     this.voices.push(voice);
     voice.osc.start(0);
   }
@@ -72,6 +75,10 @@ export default class PolyOscillator {
     voice.env.endEnvelope();
     this.voices.splice(index, 1);
     voice.osc.stop(this.audioCtx.currentTime+voice.env.release+0.5);
+  }
+
+  connect(destination) {
+    this.destination = destination;
   }
 
   /* setter */
