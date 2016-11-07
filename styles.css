@@ -6,6 +6,10 @@
   height: 100vh;
 }
 
+.midi-info {
+  float: right;
+}
+
 .indicators {
   height: 60px;
   width: 120px;
@@ -42,3 +46,17 @@
   width: 30px;
   -webkit-appearance: slider-vertical;
 }
+
+/* Recorder */
+
+.recorder-info {
+  margin-bottom: 10px;
+}
+
+.recorder-button {
+  margin: 10px;
+}
+
+input[type="button"] {
+  width: 90px;
+} 

@@ -4,7 +4,10 @@ import ReactDOM from 'react-dom';
 import { Midi } from '../utils/midi';
 import { ProtoSynth } from '../protosynth/protosynth';
 
+import { MidiRecorder } from '../utils/midi-recorder';
+
 import { SynthUI } from './synth-ui/SynthUI.component';
+import { RecorderUI } from './recorder-ui/RecorderUI.component';
 import { Indicator } from './indicator/Indicator.component';
 
 /**
@@ -26,6 +29,7 @@ class App extends React.Component {
 
     this.midi = new Midi();
     this.synth = new ProtoSynth(this.midi);
+    this.midiRecorder = new MidiRecorder();
 
     /* MIDIMessageListener */
     window.addEventListener('midi:message', ({ detail: data }) => {
@@ -55,16 +59,19 @@ class App extends React.Component {
   render() {
     return (
       <div className="main">
-        <span>Cmd: {this.state.cmd}</span><br/>
-        <span>Channel: {this.state.channel}</span><br/>
-        <span>Type: {this.state.type}</span><br/>
-        <span>Note: {this.state.note}</span><br/>
-        <span>Velocity: {this.state.velocity}</span>
-        <div className="indicators">
-          <Indicator max="127" value={this.state.velocity} />
-          <Indicator max="127" value={this.state.velocity} />
+        <div className="midi-info">
+          <span>Cmd: {this.state.cmd}</span><br/>
+          <span>Channel: {this.state.channel}</span><br/>
+          <span>Type: {this.state.type}</span><br/>
+          <span>Note: {this.state.note}</span><br/>
+          <span>Velocity: {this.state.velocity}</span>
+          <div className="indicators">
+            <Indicator max="127" value={this.state.velocity} />
+            <Indicator max="127" value={this.state.velocity} />
+          </div>
         </div>
         <SynthUI synth={this.synth} />
+        <RecorderUI recorder={this.midiRecorder} />
       </div>
     );
   }

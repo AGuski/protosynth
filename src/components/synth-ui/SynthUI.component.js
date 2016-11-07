@@ -20,35 +20,35 @@ export class SynthUI extends React.Component {
     let synth = this.props.synth;
     let value = event.target.value;
     switch (event.target.name) {
-      case "polyphoneCtrl":
+      case 'polyphoneCtrl':
         synth.oscillator.setPolyphony(event.target.checked);
         this.setState({polyphone: event.target.checked});
         break;
-      case "typeCtrl":
+      case 'typeCtrl':
         synth.oscillator.setParam('osc.type', value);
         this.setState({type: value});
         break;
-      case "pitchCtrl":
+      case 'pitchCtrl':
         synth.oscillator.setParam('osc.detune.value', value);
         this.setState({detune: value});
         break;
-      case "attackCtrl":
+      case 'attackCtrl':
         synth.oscillator.setParam('env.attack', parseFloat(value));
         this.setState({attack: value});
         break;
-      case "decayCtrl":
+      case 'decayCtrl':
         synth.oscillator.setParam('env.decay', parseFloat(value));
         this.setState({decay: value});
         break;
-      case "sustainCtrl":
+      case 'sustainCtrl':
         synth.oscillator.setParam('env.sustain', parseFloat(value));
         this.setState({sustain: value});
         break;
-      case "releaseCtrl":
+      case 'releaseCtrl':
         synth.oscillator.setParam('env.release', parseFloat(value));
         this.setState({release: value});
         break;
-      case "filterCtrl":
+      case 'filterCtrl':
         synth.filter.frequency.value = parseFloat(value);
         this.setState({filter: value});
         break;
