@@ -21563,7 +21563,7 @@ webpackJsonp([0],[
 	        var inputs = _this.midi.inputs.values();
 	        if (_this.midi.inputs.size === 0) {
 	          /* Play with Keyboard for testing */
-	          console.log("No MIDI Device detected, switching to keyboard control...");
+	          alert("No MIDI Device detected, switching to keyboard control...");
 	          _this._useKeyboard();
 	        } else {
 	          _this._listInputsAndOutputs(midiAccess);
@@ -21714,33 +21714,22 @@ webpackJsonp([0],[
 	    value: function _useKeyboard() {
 	      var _this2 = this;
 	
-	      var _onKeyDown = function onKeyDown(event) {
-	        if (KEY_NOTE_DICT[event.keyCode]) {
+	      var pressedKeys = [];
+	
+	      document.addEventListener('keydown', function (event) {
+	        if (KEY_NOTE_DICT[event.keyCode] && pressedKeys.indexOf(event.keyCode) === -1) {
 	          _this2._noteOn(KEY_NOTE_DICT[event.keyCode], 100);
-	          document.removeEventListener('keydown', _onKeyDown);
-	          document.addEventListener('keyup', onKeyUp);
+	          pressedKeys.push(event.keyCode);
 	        }
-	      };
-	      _onKeyDown = _onKeyDown.bind(this);
-	
-	      var onKeyUp = function (_onKeyUp) {
-	        function onKeyUp(_x) {
-	          return _onKeyUp.apply(this, arguments);
-	        }
-	
-	        onKeyUp.toString = function () {
-	          return _onKeyUp.toString();
-	        };
-	
-	        return onKeyUp;
-	      }(function (event) {
-	        _this2._noteOff(KEY_NOTE_DICT[event.keyCode], 100);
-	        document.addEventListener('keydown', _onKeyDown);
-	        document.removeEventListener('keyup', onKeyUp);
 	      });
-	      onKeyUp = onKeyUp.bind(this);
 	
-	      document.addEventListener('keydown', _onKeyDown);
+	      document.addEventListener('keyup', function (event) {
+	        var index = pressedKeys.indexOf(event.keyCode);
+	        if (index !== -1) {
+	          _this2._noteOff(KEY_NOTE_DICT[event.keyCode], 0);
+	          pressedKeys.splice(index, 1);
+	        }
+	      });
 	    }
 	  }]);
 	
@@ -21835,6 +21824,14 @@ webpackJsonp([0],[
 	      }
 	    });
 	    this.oscillator.setPolyphony(false);
+	
+	    this.filter = this.audioCtx.createBiquadFilter();
+	    this.filter.frequency.value = 22000;
+	    this.filter.type = 'lowpass';
+	    this.filter.Q.value = 5;
+	
+	    this.oscillator.connect(this.filter);
+	    this.filter.connect(this.audioCtx.destination);
 	
 	    /* NoteOnListener */
 	    window.addEventListener('midi:noteOn', function (_ref) {
@@ -21935,6 +21932,7 @@ webpackJsonp([0],[
 	  function PolyOscillator(audioContext, options) {
 	    _classCallCheck(this, PolyOscillator);
 	
+	    this.destination;
 	    this.audioCtx = audioContext;
 	    this.params = {
 	      osc: options.osc,
@@ -21997,7 +21995,9 @@ webpackJsonp([0],[
 	
 	      // Connections
 	      voice.osc.connect(voice.env);
-	      voice.env.connect(this.audioCtx.destination);
+	      if (this.destination) {
+	        voice.env.connect(this.destination);
+	      }
 	      this.voices.push(voice);
 	      voice.osc.start(0);
 	    }
@@ -22011,6 +22011,11 @@ webpackJsonp([0],[
 	      voice.env.endEnvelope();
 	      this.voices.splice(index, 1);
 	      voice.osc.stop(this.audioCtx.currentTime + voice.env.release + 0.5);
+	    }
+	  }, {
+	    key: 'connect',
+	    value: function connect(destination) {
+	      this.destination = destination;
 	    }
 	
 	    /* setter */
@@ -22258,7 +22263,8 @@ webpackJsonp([0],[
 	      attack: _this.props.synth.oscillator.getParam('env.attack'),
 	      decay: _this.props.synth.oscillator.getParam('env.decay'),
 	      sustain: _this.props.synth.oscillator.getParam('env.sustain'),
-	      release: _this.props.synth.oscillator.getParam('env.release')
+	      release: _this.props.synth.oscillator.getParam('env.release'),
+	      filter: _this.props.synth.filter.frequency.value
 	    };
 	    return _this;
 	  }
@@ -22296,6 +22302,10 @@ webpackJsonp([0],[
 	        case "releaseCtrl":
 	          synth.oscillator.setParam('env.release', parseFloat(value));
 	          this.setState({ release: value });
+	          break;
+	        case "filterCtrl":
+	          synth.filter.frequency.value = parseFloat(value);
+	          this.setState({ filter: value });
 	          break;
 	      }
 	    }
@@ -22409,6 +22419,19 @@ webpackJsonp([0],[
 	            }),
 	            this.props.synth.oscillator.getParam('env.release').toFixed(3)
 	          )
+	        ),
+	        _react2.default.createElement(
+	          'label',
+	          { className: 'synth-input', htmlFor: 'filterCtrl' },
+	          'Lowpass Filter:',
+	          _react2.default.createElement('input', { type: 'range', name: 'filterCtrl',
+	            min: '0', max: '14000', step: '1',
+	            value: this.state.filter,
+	            onChange: this.handleChange
+	          }),
+	          ' ',
+	          this.props.synth.filter.frequency.value,
+	          ' Hz'
 	        )
 	      );
 	    }
