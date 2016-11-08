@@ -21411,9 +21411,13 @@ webpackJsonp([0],[
 	
 	var _protosynth = __webpack_require__(174);
 	
-	var _SynthUI = __webpack_require__(178);
+	var _midiRecorder = __webpack_require__(178);
 	
-	var _Indicator = __webpack_require__(179);
+	var _SynthUI = __webpack_require__(180);
+	
+	var _RecorderUI = __webpack_require__(181);
+	
+	var _Indicator = __webpack_require__(182);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -21446,6 +21450,7 @@ webpackJsonp([0],[
 	
 	    _this.midi = new _midi.Midi();
 	    _this.synth = new _protosynth.ProtoSynth(_this.midi);
+	    _this.midiRecorder = new _midiRecorder.MidiRecorder();
 	
 	    /* MIDIMessageListener */
 	    window.addEventListener('midi:message', function (_ref) {
@@ -21486,46 +21491,51 @@ webpackJsonp([0],[
 	        'div',
 	        { className: 'main' },
 	        _react2.default.createElement(
-	          'span',
-	          null,
-	          'Cmd: ',
-	          this.state.cmd
-	        ),
-	        _react2.default.createElement('br', null),
-	        _react2.default.createElement(
-	          'span',
-	          null,
-	          'Channel: ',
-	          this.state.channel
-	        ),
-	        _react2.default.createElement('br', null),
-	        _react2.default.createElement(
-	          'span',
-	          null,
-	          'Type: ',
-	          this.state.type
-	        ),
-	        _react2.default.createElement('br', null),
-	        _react2.default.createElement(
-	          'span',
-	          null,
-	          'Note: ',
-	          this.state.note
-	        ),
-	        _react2.default.createElement('br', null),
-	        _react2.default.createElement(
-	          'span',
-	          null,
-	          'Velocity: ',
-	          this.state.velocity
-	        ),
-	        _react2.default.createElement(
 	          'div',
-	          { className: 'indicators' },
-	          _react2.default.createElement(_Indicator.Indicator, { max: '127', value: this.state.velocity }),
-	          _react2.default.createElement(_Indicator.Indicator, { max: '127', value: this.state.velocity })
+	          { className: 'midi-info' },
+	          _react2.default.createElement(
+	            'span',
+	            null,
+	            'Cmd: ',
+	            this.state.cmd
+	          ),
+	          _react2.default.createElement('br', null),
+	          _react2.default.createElement(
+	            'span',
+	            null,
+	            'Channel: ',
+	            this.state.channel
+	          ),
+	          _react2.default.createElement('br', null),
+	          _react2.default.createElement(
+	            'span',
+	            null,
+	            'Type: ',
+	            this.state.type
+	          ),
+	          _react2.default.createElement('br', null),
+	          _react2.default.createElement(
+	            'span',
+	            null,
+	            'Note: ',
+	            this.state.note
+	          ),
+	          _react2.default.createElement('br', null),
+	          _react2.default.createElement(
+	            'span',
+	            null,
+	            'Velocity: ',
+	            this.state.velocity
+	          ),
+	          _react2.default.createElement(
+	            'div',
+	            { className: 'indicators' },
+	            _react2.default.createElement(_Indicator.Indicator, { max: '127', value: this.state.velocity }),
+	            _react2.default.createElement(_Indicator.Indicator, { max: '127', value: this.state.velocity })
+	          )
 	        ),
-	        _react2.default.createElement(_SynthUI.SynthUI, { synth: this.synth })
+	        _react2.default.createElement(_SynthUI.SynthUI, { synth: this.synth }),
+	        _react2.default.createElement(_RecorderUI.RecorderUI, { recorder: this.midiRecorder })
 	      );
 	    }
 	  }]);
@@ -22226,6 +22236,165 @@ webpackJsonp([0],[
 /* 178 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* WEBPACK VAR INJECTION */(function($) {'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	/**
+	 *  A simple Recorder of MIDI-like data. I am not so sure about the jquery event listeners....
+	 *  
+	 *  Stage 1: use good ol' DateTime + setTimeout
+	 *  Stage 2: I want performance.now() ! -> compare to before
+	 *  Stage 3: Do rock solid scheduled timing as described here: https://www.html5rocks.com/en/tutorials/audio/scheduling/
+	 * 
+	 *  This UI updating sucks!! How to make it better?!?
+	 * 
+	 */
+	
+	var MidiRecorder = exports.MidiRecorder = function () {
+	  function MidiRecorder() {
+	    _classCallCheck(this, MidiRecorder);
+	
+	    this.track = {
+	      begin: 0,
+	      length: 0,
+	      events: []
+	    };
+	    this.listeners;
+	    this.recording = false;
+	    this.playing = false;
+	  }
+	
+	  _createClass(MidiRecorder, [{
+	    key: 'startRecord',
+	    value: function startRecord() {
+	      var _this = this;
+	
+	      console.log('startRec');
+	      this.recording = true;
+	      this.track.events = [];
+	      this.track.begin = Date.now();
+	
+	      $(window).on('midi:message', function (_ref) {
+	        // TODO - does only work with midiInput and doubles noteOn/Off;
+	
+	        var data = _ref.detail;
+	      });
+	      $(window).on('midi:noteOn', function (_ref2) {
+	        var data = _ref2.detail;
+	
+	        _this.track.events.push({ type: 'noteOn', data: data, timestamp: Date.now() - _this.track.begin });
+	        _this.updateUI();
+	      });
+	      $(window).on('midi:noteOff', function (_ref3) {
+	        var data = _ref3.detail;
+	
+	        _this.track.events.push({ type: 'noteOff', data: data, timestamp: Date.now() - _this.track.begin });
+	        _this.updateUI();
+	      });
+	      this.updateUI();
+	    }
+	  }, {
+	    key: 'stopRecord',
+	    value: function stopRecord() {
+	      console.log('stopRec');
+	      this.recording = false;
+	      this.track.length = Date.now() - this.track.begin;
+	      $(window).off('midi:message');
+	      $(window).off('midi:noteOn');
+	      $(window).off('midi:noteOff');
+	      this.updateUI();
+	    }
+	  }, {
+	    key: 'startPlayback',
+	    value: function startPlayback() {
+	      var _this2 = this;
+	
+	      console.log('startPlay');
+	      this.playing = true;
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
+	
+	      try {
+	        var _loop = function _loop() {
+	          var event = _step.value;
+	
+	          setTimeout(function () {
+	            if (_this2.playing) {
+	              _this2.sendData(event);
+	            }
+	          }, event.timestamp);
+	        };
+	
+	        for (var _iterator = this.track.events[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          _loop();
+	        }
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
+	        }
+	      }
+	
+	      setTimeout(function () {
+	        if (_this2.playing) {
+	          _this2.stopPlayback();
+	        }
+	      }, this.track.length);
+	      this.updateUI();
+	    }
+	  }, {
+	    key: 'stopPlayback',
+	    value: function stopPlayback() {
+	      console.log('stopPlay');
+	      this.playing = false;
+	      this.updateUI();
+	    }
+	  }, {
+	    key: 'sendData',
+	    value: function sendData(event) {
+	      var data = event.data;
+	      switch (event.type) {
+	        case 'noteOn':
+	          window.dispatchEvent(new CustomEvent('midi:noteOn', {
+	            'detail': { note: data.note, velocity: data.velocity }
+	          }));
+	          break;
+	        case 'noteOff':
+	          window.dispatchEvent(new CustomEvent('midi:noteOff', {
+	            'detail': { note: data.note, velocity: data.velocity }
+	          }));
+	          break;
+	        default:
+	      }
+	      this.updateUI();
+	    }
+	  }]);
+
+	  return MidiRecorder;
+	}();
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(179)))
+
+/***/ },
+/* 179 */,
+/* 180 */
+/***/ function(module, exports, __webpack_require__) {
+
 	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
@@ -22275,35 +22444,35 @@ webpackJsonp([0],[
 	      var synth = this.props.synth;
 	      var value = event.target.value;
 	      switch (event.target.name) {
-	        case "polyphoneCtrl":
+	        case 'polyphoneCtrl':
 	          synth.oscillator.setPolyphony(event.target.checked);
 	          this.setState({ polyphone: event.target.checked });
 	          break;
-	        case "typeCtrl":
+	        case 'typeCtrl':
 	          synth.oscillator.setParam('osc.type', value);
 	          this.setState({ type: value });
 	          break;
-	        case "pitchCtrl":
+	        case 'pitchCtrl':
 	          synth.oscillator.setParam('osc.detune.value', value);
 	          this.setState({ detune: value });
 	          break;
-	        case "attackCtrl":
+	        case 'attackCtrl':
 	          synth.oscillator.setParam('env.attack', parseFloat(value));
 	          this.setState({ attack: value });
 	          break;
-	        case "decayCtrl":
+	        case 'decayCtrl':
 	          synth.oscillator.setParam('env.decay', parseFloat(value));
 	          this.setState({ decay: value });
 	          break;
-	        case "sustainCtrl":
+	        case 'sustainCtrl':
 	          synth.oscillator.setParam('env.sustain', parseFloat(value));
 	          this.setState({ sustain: value });
 	          break;
-	        case "releaseCtrl":
+	        case 'releaseCtrl':
 	          synth.oscillator.setParam('env.release', parseFloat(value));
 	          this.setState({ release: value });
 	          break;
-	        case "filterCtrl":
+	        case 'filterCtrl':
 	          synth.filter.frequency.value = parseFloat(value);
 	          this.setState({ filter: value });
 	          break;
@@ -22441,7 +22610,136 @@ webpackJsonp([0],[
 	}(_react2.default.Component);
 
 /***/ },
-/* 179 */
+/* 181 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.RecorderUI = undefined;
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _react = __webpack_require__(1);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+	
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	
+	var RecorderUI = exports.RecorderUI = function (_React$Component) {
+	  _inherits(RecorderUI, _React$Component);
+	
+	  function RecorderUI(props) {
+	    _classCallCheck(this, RecorderUI);
+	
+	    var _this = _possibleConstructorReturn(this, (RecorderUI.__proto__ || Object.getPrototypeOf(RecorderUI)).call(this, props));
+	
+	    _this.handleClick = _this.handleClick.bind(_this);
+	    _this.handleChange = _this.handleChange.bind(_this);
+	    _this.update = _this.update.bind(_this);
+	    _this.props.recorder.updateUI = _this.update;
+	    _this.state = {
+	      recording: _this.props.recorder.recording,
+	      playing: _this.props.recorder.playing
+	    };
+	    return _this;
+	  }
+	
+	  _createClass(RecorderUI, [{
+	    key: 'update',
+	    value: function update() {
+	      this.forceUpdate();
+	    }
+	  }, {
+	    key: 'handleClick',
+	    value: function handleClick(event) {
+	      var recorder = this.props.recorder;
+	      switch (event.target.name) {
+	        case 'recordButton':
+	          if (!this.state.recording) {
+	            recorder.startRecord();
+	            this.setState({ recording: true });
+	          } else {
+	            recorder.stopRecord();
+	            this.setState({ recording: false });
+	          }
+	          break;
+	        case 'playButton':
+	          if (!this.state.playing) {
+	            recorder.startPlayback();
+	            this.setState({ playing: true });
+	          } else {
+	            recorder.stopPlayback();
+	            this.setState({ playing: false });
+	          }
+	          break;
+	        default:
+	      }
+	    }
+	  }, {
+	    key: 'handleChange',
+	    value: function handleChange(event) {}
+	  }, {
+	    key: 'render',
+	    value: function render() {
+	      return _react2.default.createElement(
+	        'div',
+	        null,
+	        _react2.default.createElement(
+	          'h1',
+	          null,
+	          'midiRecorder'
+	        ),
+	        _react2.default.createElement(
+	          'div',
+	          { className: 'recorder-info' },
+	          _react2.default.createElement(
+	            'span',
+	            { className: 'recorder-button' },
+	            'Track length: ',
+	            this.props.recorder.track.length,
+	            ' ms.'
+	          ),
+	          _react2.default.createElement(
+	            'span',
+	            { className: 'recorder-button' },
+	            'Track events: ',
+	            this.props.recorder.track.events.length
+	          )
+	        ),
+	        _react2.default.createElement(
+	          'label',
+	          { className: 'recorder-button', htmlFor: 'recordButton' },
+	          _react2.default.createElement('input', { type: 'button', name: 'recordButton',
+	            value: this.props.recorder.recording ? 'STOP' : 'RECORD',
+	            onClick: this.handleClick
+	          })
+	        ),
+	        _react2.default.createElement(
+	          'label',
+	          { className: 'recorder-button', htmlFor: 'playButton' },
+	          _react2.default.createElement('input', { type: 'button', name: 'playButton',
+	            value: this.props.recorder.playing ? 'STOP' : 'PLAY',
+	            onClick: this.handleClick
+	          })
+	        )
+	      );
+	    }
+	  }]);
+	
+	  return RecorderUI;
+	}(_react2.default.Component);
+
+/***/ },
+/* 182 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
